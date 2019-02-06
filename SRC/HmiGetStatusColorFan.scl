@@ -1,0 +1,30 @@
+﻿FUNCTION "HmiGetStatusColorFan" : Int
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : Searinox
+VERSION : 0.1
+   VAR_INPUT 
+      iFan : "Fan";
+   END_VAR
+
+
+BEGIN
+	#HmiGetStatusColorFan := 0;
+	IF #iFan.HasError OR NOT #iFan.RepairSwitch THEN
+	    #HmiGetStatusColorFan := 41;
+	ELSIF #iFan.Q AND NOT #iFan.IsRunning THEN
+	    #HmiGetStatusColorFan := 31;
+	ELSIF #iFan.Q AND #iFan.IsRunning THEN
+	    #HmiGetStatusColorFan := 20;
+	ELSIF NOT #iFan.Q AND #iFan.IsRunning THEN
+	    #HmiGetStatusColorFan := 20;
+	ELSIF NOT #iFan.Q AND NOT #iFan.IsRunning THEN
+	    #HmiGetStatusColorFan := 11;
+	ELSE
+	    #HmiGetStatusColorFan := 404;
+	END_IF;
+	
+	IF #HmiGetStatusColorFan = 20 THEN
+	    #HmiGetStatusColorFan := #HmiGetStatusColorFan + #iFan.AnimationFrame;
+	END_IF;
+END_FUNCTION
+

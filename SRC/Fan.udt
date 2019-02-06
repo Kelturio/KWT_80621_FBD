@@ -1,0 +1,13 @@
+﻿TYPE "Fan"
+VERSION : 0.1
+   STRUCT
+      Q : Bool;
+      IsRunning : Bool;
+      HasError : Bool;
+      RepairSwitch : Bool;
+      SetPoint : Int;
+      AnimationFrame : Int := 1;
+   END_STRUCT;
+
+END_TYPE
+

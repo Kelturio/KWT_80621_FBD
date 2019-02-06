@@ -1,0 +1,11 @@
+﻿TYPE "Tank"
+VERSION : 0.1
+   STRUCT
+      Val : "Val";
+      SetPoint : "SetPoint";
+      Limits : "Limits";
+      Levels : "Levels";
+   END_STRUCT;
+
+END_TYPE
+

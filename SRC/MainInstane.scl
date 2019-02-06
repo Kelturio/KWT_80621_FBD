@@ -1,0 +1,209 @@
+﻿FUNCTION_BLOCK "MainInstane"
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'Searinox(Gerrit_Vogtlaender)'
+FAMILY : AKK
+VERSION : 0.1
+   VAR 
+      AlwaysRUN : "AlwaysRUN";
+      Auto : "Auto";
+      Hand : "Hand";
+      sAutoMode : Bool := true;
+   END_VAR
+   VAR RETAIN
+      HMI : Struct
+         StorageTankRefill : Bool;
+      END_STRUCT;
+   END_VAR
+   VAR 
+      EmergencyStop : "EmergencyStop";
+      sPumpPlant1 : "Pump";
+      sPumpPlant2 : "Pump";
+      sPumpCoolWater1 : "Pump";
+      sPumpCoolWater2 : "Pump";
+      sPumpFurnace1 : "Pump";
+      sPumpFurnace2 : "Pump";
+      sFan1 : "Fan";
+      sFan2 : "Fan";
+      sSprayPipe1 : "Valve";
+      sSprayPipe2 : "Valve";
+      sSurgeTankRefill : "Valve";
+      sAnimationPt : Time := T#100ms;
+      sAnimationRange : "Range";
+      sAnimationFrame : Int := 1;
+      sLiftingSys1 : "LiftingSys";
+      sLiftingSys2 : "LiftingSys";
+      sTempPlant : "Temperature";
+      sTempFurnace : "Temperature";
+      sSurgeTank : "Tank";
+      sBleedingUnit : "BleedingUnit";
+   END_VAR
+
+   VAR_TEMP 
+      tSurgeTankLevelOut : "Nibble";
+   END_VAR
+
+
+BEGIN
+	#sPumpPlant1.Q := "Werkspumpe 1";
+	#sPumpPlant1.IsRunning := "Werkspumpe 1 Betrieb";
+	#sPumpPlant1.HasError := "Werkspumpe 1 Störung";
+	
+	#sPumpPlant2.Q := "Werkspumpe 2";
+	#sPumpPlant2.IsRunning := "Werkspumpe 2 Betrieb";
+	#sPumpPlant2.HasError := "Werkspumpe 2 Störung";
+	
+	#sPumpCoolWater1.Q := "Kühlwasserpumpe 1";
+	#sPumpCoolWater1.IsRunning := "Kühlwasserpumpe 1 Betrieb";
+	#sPumpCoolWater1.HasError := NOT "Kühlwasserpumpe 1 MSS OK";
+	
+	#sPumpCoolWater2.Q := "Kühlwasserpumpe 2";
+	#sPumpCoolWater2.IsRunning := "Kühlwasserpumpe 2 Betrieb";
+	#sPumpCoolWater2.HasError := NOT "Kühlwasserpumpe 2 MSS OK";
+	
+	#sPumpFurnace1.Q := "Ofenpumpe 1";
+	#sPumpFurnace1.IsRunning := "Ofenpumpe 1 Betrieb";
+	#sPumpFurnace1.HasError := NOT "Ofenpumpe 1 MSS OK";
+	
+	#sPumpFurnace2.Q := "Ofenpumpe 2";
+	#sPumpFurnace2.IsRunning := "Ofenpumpe 2 Betrieb";
+	#sPumpFurnace2.HasError := NOT "Ofenpumpe 2 MSS OK";
+	
+	#sFan1.Q := "KT 1 Ventilator";
+	#sFan1.IsRunning := "KT 1 Ventilator Betrieb";
+	#sFan1.HasError := "KT 1 Ventilator Störung";
+	#sFan1.RepairSwitch := "KT 1 Ventilator RS ein";
+	#sFan1.AnimationFrame := #sAnimationFrame;
+	#sFan1.SetPoint := REAL_TO_INT("ScaleValueIntToReal100"("KT 1 Ventilator Sollwert"));
+	
+	#sFan2.Q := "KT 2 Ventilator";
+	#sFan2.IsRunning := "KT 2 Ventilator Betrieb";
+	#sFan2.HasError := "KT 2 Ventilator Störung";
+	#sFan2.RepairSwitch := "KT 2 Ventilator RS ein";
+	#sFan2.AnimationFrame := #sAnimationFrame;
+	#sFan2.SetPoint := REAL_TO_INT("ScaleValueIntToReal100"("KT 2 Ventilator Sollwert"));
+	
+	#sSprayPipe1.Q := "KT 1 Sprührohr öffnen";
+	#sSprayPipe1.IsOpen := "KT 1 Sprührohr geöffnet";
+	#sSprayPipe1.Timeout := "Retain_DB".Settings.SprayPipeOpenTimeout;
+	//#sSprayPipe1.HasError := 
+	
+	#sSprayPipe2.Q := "KT 2 Sprührohr öffnen";
+	#sSprayPipe2.IsOpen := "KT 2 Sprührohr geöffnet";
+	#sSprayPipe2.Timeout := "Retain_DB".Settings.SprayPipeOpenTimeout;
+	//#sSprayPipe2.HasError := 
+	
+	#sSurgeTankRefill.Q := "WSB Magnetventil";
+	#sSurgeTankRefill.IsOpen := "WSB Magnetventil";
+	//sSurgeTankRefill.HasError := 
+	//
+	#sLiftingSys1.DeltaPressure.IW := "HA 1 Differenzdruck";
+	#sLiftingSys1.DeltaPressure.Val := "ScaleInputWord100"("HA 1 Differenzdruck");
+	//#sLiftingSys1.DeltaPressure.Limits.Min
+	#sLiftingSys1.DeltaPressure.Limits.Max := "RealToNum"("Retain_DB".Settings.MaxPressureDeltaPerc1);
+	
+	#sLiftingSys2.DeltaPressure.IW := "HA 2 Differenzdruck";
+	#sLiftingSys2.DeltaPressure.Val := "ScaleInputWord100"("HA 2 Differenzdruck");
+	//#sLiftingSys1.DeltaPressure.Limits.Min
+	#sLiftingSys2.DeltaPressure.Limits.Max := "RealToNum"("Retain_DB".Settings.MaxPressureDeltaPerc2);
+	
+	#sTempPlant.IW := "Vorlauftemperatur Werk";
+	#sTempPlant.Val := "ScaleInputWord100"("Vorlauftemperatur Werk");
+	//#sTempPlant.SetPoint.Lower
+	#sTempPlant.SetPoint.Upper := "RealToNum"("Retain_DB".Settings.SetPointTempPlant);
+	//#sTempPlant.Limits.Min
+	#sTempPlant.Limits.Max := "RealToNum"("Retain_DB".Settings.SetPointTempPlant);
+	
+	#sTempFurnace.IW := "Vorlauftemperatur Ofen";
+	#sTempFurnace.Val := "ScaleInputWord100"("Vorlauftemperatur Ofen");
+	//sTempFurnace.SetPoint.Lower
+	#sTempFurnace.SetPoint.Upper := "RealToNum"("Retain_DB".Settings.SetPointTempFurnace);
+	//sTempFurnace.Limits.Min
+	#sTempFurnace.Limits.Max := "RealToNum"("Retain_DB".Settings.MaxTempTransgression);
+	
+	#tSurgeTankLevelOut.X0 := "WSB OUT1";
+	#tSurgeTankLevelOut.X1 := "WSB OUT2";
+	#tSurgeTankLevelOut.X2 := "WSB OUT3";
+	#tSurgeTankLevelOut.X3 := "WSB OUT4";
+	#sSurgeTank.Val := "IntToNum"("NibbleToInt"(#tSurgeTankLevelOut));
+	#sSurgeTank.SetPoint.Lower := "IntToNum"("Retain_DB".Settings.SurgeTankLevel.SetPointLower);
+	#sSurgeTank.SetPoint.Upper := "IntToNum"("Retain_DB".Settings.SurgeTankLevel.SetPointUpper);
+	#sSurgeTank.Limits.Min := "IntToNum"("Retain_DB".Settings.SurgeTankLevel.RunDry);
+	#sSurgeTank.Limits.Max := "IntToNum"("Retain_DB".Settings.SurgeTankLevel.Overflow);
+	#sSurgeTank.Levels := "Retain_DB".Settings.SurgeTankLevel;
+	
+	#sBleedingUnit.IsRunning := "Absalzanlage läuft";
+	#sBleedingUnit.HasError := NOT "Absalzanlage Störung";
+	
+	#AlwaysRUN(iCvOff := NOT "Steuerspannung Ein",
+	           iFuseOutputsErr := NOT "Sicherung Ausgänge OK",
+	           iCt1RepairSwitchOff := NOT "KT 1 Ventilator RS ein",
+	           iCt2RepairSwitchOff := NOT "KT 2 Ventilator RS ein",
+	           iAutoMode := #sAutoMode,
+	           iPumpPlant1 := #sPumpPlant1,
+	           iPumpPlant2 := #sPumpPlant2,
+	           iPumpCoolWater1 := #sPumpCoolWater1,
+	           iPumpCoolWater2 := #sPumpCoolWater2,
+	           iPumpFurnace1 := #sPumpFurnace1,
+	           iPumpFurnace2 := #sPumpFurnace2,
+	           iFan1 := #sFan1,
+	           iFan2 := #sFan2,
+	           iSprayPipe1 := #sSprayPipe1,
+	           iSprayPipe2 := #sSprayPipe2,
+	           iSurgeTankRefill := #sSurgeTankRefill,
+	           iAnimationPt := #sAnimationPt,
+	           iAnimationRange := #sAnimationRange,
+	           iLiftingSys1 := #sLiftingSys1,
+	           iLiftingSys2 := #sLiftingSys2,
+	           iTempPlant := #sTempPlant,
+	           iTempFurnace := #sTempFurnace,
+	           iSurgeTank := #sSurgeTank,
+	           iBleedingUnit := #sBleedingUnit,
+	           oAlarmLamp => "Rundumleuchte Störung",
+	           oSurgeTankRefill => "WSB Magnetventil",
+	           oAnimationFrame => #sAnimationFrame);
+	
+	IF NOT "Steuerspannung Ein" OR NOT "Sicherung Ausgänge OK" THEN
+	    #sAutoMode := 0;
+	    #EmergencyStop();
+	END_IF;
+	
+	IF #sAutoMode THEN
+	    #Auto(iPumpPlant1Run := "Werkspumpe 1 Betrieb",
+	          iPumpPlant1Err := "Werkspumpe 1 Störung",
+	          iPumpPlant2Run := "Werkspumpe 2 Betrieb",
+	          iPumpPlant2Err := "Werkspumpe 2 Störung",
+	          iPumpCoolWater1Run := "Kühlwasserpumpe 1 Betrieb",
+	          iPumpCoolWater2Run := "Kühlwasserpumpe 2 Betrieb",
+	          iPumpCoolWater1Err := NOT "Kühlwasserpumpe 1 MSS OK",
+	          iPumpCoolWater2Err := NOT "Kühlwasserpumpe 2 MSS OK",
+	          iBleedingUnitCirculatingPumpRun := "Absalzanlage läuft",
+	          iCt1SprayPipeIsOpen := "KT 1 Sprührohr geöffnet",
+	          iCt2SprayPipeIsOpen := "KT 2 Sprührohr geöffnet",
+	          iPumpPlant1 := #sPumpPlant1,
+	          iPumpPlant2 := #sPumpPlant2,
+	          iPumpCoolWater1 := #sPumpCoolWater1,
+	          iPumpCoolWater2 := #sPumpCoolWater2,
+	          iPumpFurnace1 := #sPumpFurnace1,
+	          iPumpFurnace2 := #sPumpFurnace2,
+	          iFan1 := #sFan1,
+	          iFan2 := #sFan2,
+	          iSurgeTank:=#sSurgeTank,
+	          iTempPlant:=#sTempPlant,
+	          iTempFurnace:=#sTempFurnace,
+	          oPumpPlant1 => "Werkspumpe 1",
+	          oPumpPlant2 => "Werkspumpe 2",
+	          oPumpCoolWater1 => "Kühlwasserpumpe 1",
+	          oPumpCoolWater2 => "Kühlwasserpumpe 2",
+	          oCt1Fan => "KT 1 Ventilator",
+	          oCt2Fan => "KT 2 Ventilator",
+	          oCt1FanSetPoint => "KT 1 Ventilator Sollwert",
+	          oCt2FanSetPoint => "KT 2 Ventilator Sollwert",
+	          oCt1SprayPipeOpen => "KT 1 Sprührohr öffnen",
+	          oCt2SprayPipeOpen => "KT 2 Sprührohr öffnen");
+	ELSE
+	    #Hand(iSurgeTank := #sSurgeTank,
+	          oCt1FanSetPoint => "KT 1 Ventilator Sollwert",
+	          oCt2FanSetPoint => "KT 2 Ventilator Sollwert");
+	END_IF;
+END_FUNCTION_BLOCK
+

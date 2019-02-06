@@ -1,0 +1,10 @@
+﻿TYPE "Range"
+VERSION : 0.1
+   STRUCT
+      Start : Int;
+      End : Int;
+      Step : Int := 1;
+   END_STRUCT;
+
+END_TYPE
+

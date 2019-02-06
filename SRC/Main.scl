@@ -1,0 +1,12 @@
+﻿ORGANIZATION_BLOCK "Main"
+TITLE = "Main Program Sweep (Cycle)"
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'Searinox(Gerrit_Vogtlaender)'
+FAMILY : AKK
+VERSION : 0.1
+
+BEGIN
+	"Main_DB"();
+	
+END_ORGANIZATION_BLOCK
+

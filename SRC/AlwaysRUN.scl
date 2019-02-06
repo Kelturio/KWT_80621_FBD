@@ -1,0 +1,180 @@
+﻿FUNCTION_BLOCK "AlwaysRUN"
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'Searinox(Gerrit_Vogtlaender)'
+FAMILY : AKK
+VERSION : 0.1
+   VAR_INPUT 
+      iCvOff : Bool;   // Control Voltage Off / emergency stop
+      iFuseOutputsErr : Bool;   // Fuse Outputs Error
+      iCt1RepairSwitchOff : Bool;   // Cooling Tower 1 Repair Switch
+      iCt2RepairSwitchOff : Bool;   // Cooling Tower 2 Repair Switch
+      iAutoMode : Bool;
+      iPumpPlant1 : "Pump";
+      iPumpPlant2 : "Pump";
+      iPumpCoolWater1 : "Pump";
+      iPumpCoolWater2 : "Pump";
+      iPumpFurnace1 : "Pump";
+      iPumpFurnace2 : "Pump";
+      iFan1 : "Fan";
+      iFan2 : "Fan";
+      iSprayPipe1 : "Valve";
+      iSprayPipe2 : "Valve";
+      iSurgeTankRefill : "Valve";
+      iAnimationPt : Time;
+      iAnimationRange : "Range";
+      iLiftingSys1 : "LiftingSys";
+      iLiftingSys2 : "LiftingSys";
+      iTempPlant : "Temperature";
+      iTempFurnace : "Temperature";
+      iSurgeTank : "Tank";
+      iBleedingUnit : "BleedingUnit";
+   END_VAR
+
+   VAR_OUTPUT 
+      oAlarmLamp : Bool;
+      oSurgeTankRefill : Bool;
+      oAnimationFrame : Int;
+   END_VAR
+
+   VAR 
+      RuntimeMeters : "RuntimeMeters";
+      Alarm : "Alarm";
+      IEC_TMR_0 {OriginalPartName := 'IEC_TIMER'; LibVersion := '1.0'} : IEC_TIMER;
+      sStorageTankRefillStart : Bool;
+      sStorageTankRefillPt : Time := T#5s;
+      Animation : "Animation";
+   END_VAR
+
+   VAR_TEMP 
+      tStorageTankRefillEt : Time;
+      tAlarmCount : Int;
+      tAlarmCountCrit : Int;
+      tRuntimeMeters : Struct
+         PlcRun : DInt;
+         PumpPlant1 : DInt;
+         PumpPlant2 : DInt;
+         PumpCoolWater1 : DInt;
+         PumpCoolWater2 : DInt;
+         PumpFurnace1 : DInt;
+         PumpFurnace2 : DInt;
+         Fan1 : DInt;
+         Fan2 : DInt;
+         Rtm9 : DInt;
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+	#IEC_TMR_0.TOF(IN := #sStorageTankRefillStart,
+	               PT := #sStorageTankRefillPt,
+	               Q => #oSurgeTankRefill,
+	               ET => #tStorageTankRefillEt);
+	
+	#RuntimeMeters(iPlcRun := TRUE,
+	               iPumpPlant1 := #iPumpPlant1,
+	               iPumpPlant2 := #iPumpPlant2,
+	               iPumpCoolWater1 := #iPumpCoolWater1,
+	               iPumpCoolWater2 := #iPumpCoolWater2,
+	               iPumpFurnace1 := #iPumpFurnace1,
+	               iPumpFurnace2 := #iPumpFurnace2,
+	               iFan1 := #iFan1,
+	               iFan2 := #iFan2,
+	               iRtm9Run := FALSE);
+	
+	#Alarm(iCvOff := #iCvOff,
+	       iFuseOutputsErr := #iFuseOutputsErr,
+	       iCt1RepairSwitchOff := #iCt1RepairSwitchOff,
+	       iCt2RepairSwitchOff := #iCt2RepairSwitchOff,
+	       iFan1 := #iFan1,
+	       iFan2 := #iFan2,
+	       iPumpPlant1 := #iPumpPlant1,
+	       iPumpPlant2 := #iPumpPlant2,
+	       iPumpCoolWater1 := #iPumpCoolWater1,
+	       iPumpCoolWater2 := #iPumpCoolWater2,
+	       iPumpFurnace1 := #iPumpFurnace1,
+	       iPumpFurnace2 := #iPumpFurnace2,
+	       iSprayPipe1 := #iSprayPipe1,
+	       iSprayPipe2 := #iSprayPipe2,
+	       iLiftingSys1 := #iLiftingSys1,
+	       iLiftingSys2 := #iLiftingSys2,
+	       iTempPlant := #iTempPlant,
+	       iTempFurnace := #iTempFurnace,
+	       iSurgeTank := #iSurgeTank,
+	       iBleedingUnit := #iBleedingUnit,
+	       oAlarmCount => #tAlarmCount,
+	       oAlarmCountCrit => #tAlarmCountCrit,
+	       oAlarmLamp => #oAlarmLamp);
+	
+	#Animation(iPt := #iAnimationPt,
+	           iRange := #iAnimationRange,
+	           oFrame => #oAnimationFrame);
+	
+	"HmiDb"(iFan1 := #iFan1,
+	        iFan2 := #iFan2,
+	        iPumpPlant1 := #iPumpPlant1,
+	        iPumpPlant2 := #iPumpPlant2,
+	        iPumpCoolWater1 := #iPumpCoolWater1,
+	        iPumpCoolWater2 := #iPumpCoolWater2,
+	        iPumpFurnace1 := #iPumpFurnace1,
+	        iPumpFurnace2 := #iPumpFurnace2,
+	        iSprayPipe1 := #iSprayPipe1,
+	        iSprayPipe2 := #iSprayPipe2,
+	        iSurgeTankRefill := #iSurgeTankRefill,
+	        iAutoMode := #iAutoMode);
+	
+	"NetDb"(iAutoMode := #iAutoMode,
+	        iPumpPlant1 := #iPumpPlant1,
+	        iPumpPlant2 := #iPumpPlant2,
+	        iPumpCoolWater1 := #iPumpCoolWater1,
+	        iPumpCoolWater2 := #iPumpCoolWater2,
+	        iPumpFurnace1 := #iPumpFurnace1,
+	        iPumpFurnace2 := #iPumpFurnace2,
+	        iFan1 := #iFan1,
+	        iFan2 := #iFan2,
+	        iSprayPipe1 := #iSprayPipe1,
+	        iSprayPipe2 := #iSprayPipe2,
+	        iSurgeTankRefill := #iSurgeTankRefill,
+	        iLiftingSys1 := #iLiftingSys1,
+	        iLiftingSys2 := #iLiftingSys2,
+	        iTempPlant := #iTempPlant,
+	        iTempFurnace := #iTempFurnace,
+	        iSurgeTank := #iSurgeTank,
+	        iBleedingUnit := #iBleedingUnit,
+	        ioAlarm := #Alarm);
+	
+	#tRuntimeMeters.PlcRun := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[0].sCv;
+	#tRuntimeMeters.PumpPlant1 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[1].sCv;
+	#tRuntimeMeters.PumpPlant2 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[2].sCv;
+	#tRuntimeMeters.PumpCoolWater1 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[3].sCv;
+	#tRuntimeMeters.PumpCoolWater2 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[4].sCv;
+	#tRuntimeMeters.PumpFurnace1 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[5].sCv;
+	#tRuntimeMeters.PumpFurnace2 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[6].sCv;
+	#tRuntimeMeters.Fan1 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[7].sCv;
+	#tRuntimeMeters.Fan2 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[8].sCv;
+	#tRuntimeMeters.Rtm9 := "Main_DB".AlwaysRUN.RuntimeMeters.SRTM[9].sCv;
+	
+	"NetGerDb"(iAutoMode:=#iAutoMode,
+	           iPumpPlant1:=#iPumpPlant1,
+	           iPumpPlant2:=#iPumpPlant2,
+	           iPumpCoolWater1:=#iPumpCoolWater1,
+	           iPumpCoolWater2:=#iPumpCoolWater2,
+	           iPumpFurnace1:=#iPumpFurnace1,
+	           iPumpFurnace2:=#iPumpFurnace2,
+	           iFan1:=#iFan1,
+	           iFan2:=#iFan2,
+	           iSprayPipe1:=#iSprayPipe1,
+	           iSprayPipe2:=#iSprayPipe2,
+	           iSurgeTankRefill:=#iSurgeTankRefill,
+	           iLiftingSys1:=#iLiftingSys1,
+	           iLiftingSys2:=#iLiftingSys2,
+	           iTempPlant:=#iTempPlant,
+	           iTempFurnace:=#iTempFurnace,
+	           iSurgeTank:=#iSurgeTank,
+	           iBleedingUnit:=#iBleedingUnit,
+	           iRuntimeMeters:=#tRuntimeMeters,
+	           ioAlarm:=#Alarm);
+	
+	"HmiDataExchange".PLC_Time_RD_SYS_T_RetVal1 := RD_SYS_T("HmiAreaPointer".DateTimePLC.DateTime);
+	
+END_FUNCTION_BLOCK
+

@@ -1,0 +1,59 @@
+﻿FUNCTION_BLOCK "RuntimeMeters"
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'Searinox(Gerrit_Vogtlaender)'
+FAMILY : AKK
+VERSION : 0.1
+   VAR_INPUT 
+      iPlcRun : Bool;
+      iPumpPlant1 : "Pump";
+      iPumpPlant2 : "Pump";
+      iPumpCoolWater1 : "Pump";
+      iPumpCoolWater2 : "Pump";
+      iPumpFurnace1 : "Pump";
+      iPumpFurnace2 : "Pump";
+      iFan1 : "Fan";
+      iFan2 : "Fan";
+      iRtm9Run : Bool;
+   END_VAR
+
+   VAR 
+      SRTM : Array[0..9] of "SRTM";
+   END_VAR
+
+   VAR_TEMP 
+      tNr : Int;
+      tClk : Bool;
+   END_VAR
+
+
+BEGIN
+	FOR #tNr := 0 TO 9 DO
+	    CASE #tNr OF
+	        0:
+	            #tClk := #iPlcRun;
+	        1:
+	            #tClk := #iPumpPlant1.IsRunning;
+	        2:
+	            #tClk := #iPumpPlant2.IsRunning;
+	        3:
+	            #tClk := #iPumpCoolWater1.IsRunning;
+	        4:
+	            #tClk := #iPumpCoolWater2.IsRunning;
+	        5:
+	            #tClk := #iPumpFurnace1.IsRunning;
+	        6:
+	            #tClk := #iPumpFurnace2.IsRunning;
+	        7:
+	            #tClk := #iFan1.IsRunning;
+	        8:
+	            #tClk := #iFan2.IsRunning;
+	        9:
+	            #tClk := #iRtm9Run;
+	        ELSE
+	            #tClk := FALSE;
+	    END_CASE;
+	    #SRTM[#tNr](iClk := #tClk,
+	                iNr := INT_TO_UINT(#tNr));
+	END_FOR;
+END_FUNCTION_BLOCK
+

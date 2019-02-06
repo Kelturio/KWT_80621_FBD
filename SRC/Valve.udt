@@ -1,0 +1,13 @@
+﻿TYPE "Valve"
+VERSION : 0.1
+   STRUCT
+      Q : Bool;
+      IsOpen : Bool;
+      IsClosed : Bool;
+      HasError : Bool;
+      SetPoint : Int;
+      Timeout : Time;
+   END_STRUCT;
+
+END_TYPE
+

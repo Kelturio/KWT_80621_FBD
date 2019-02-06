@@ -1,0 +1,9 @@
+﻿TYPE "Val"
+VERSION : 0.1
+   STRUCT
+      I : Int;
+      R : Real;
+   END_STRUCT;
+
+END_TYPE
+

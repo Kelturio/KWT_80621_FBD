@@ -1,0 +1,73 @@
+﻿FUNCTION_BLOCK "Hmi"
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : Searinox
+VERSION : 0.1
+   VAR_INPUT 
+      iFan1 : "Fan";
+      iFan2 : "Fan";
+      iPumpPlant1 : "Pump";
+      iPumpPlant2 : "Pump";
+      iPumpCoolWater1 : "Pump";
+      iPumpCoolWater2 : "Pump";
+      iPumpFurnace1 : "Pump";
+      iPumpFurnace2 : "Pump";
+      iSprayPipe1 : "Valve";
+      iSprayPipe2 : "Valve";
+      iSurgeTankRefill : "Valve";
+      iAutoMode : Bool;
+   END_VAR
+
+   VAR 
+      sPumpPlant1 : Int;
+      sPumpPlant2 : Int;
+      sPumpCoolWater1 : Int;
+      sPumpCoolWater2 : Int;
+      sPumpFurnace1 : Int;
+      sPumpFurnace2 : Int;
+      sCt1Fan : Int;
+      sCt2Fan : Int;
+      sCt1SprayPipe : Int;
+      sCt2SprayPipe : Int;
+      sAutoMode : Bool := false;
+      IEC_TMR_1 {OriginalPartName := 'IEC_TIMER'; LibVersion := '1.0'} : IEC_TIMER;
+      sAutoModePt : Time := T#5s;
+      R_TRIG {OriginalPartName := 'R_TRIG_1200'; LibVersion := '1.0'} : R_TRIG;
+      sSurgeTankRefill : Int;
+   END_VAR
+
+   VAR_TEMP 
+      tAutoModeTimer : Bool;
+      tAutoModeTrigger : Bool;
+   END_VAR
+
+
+BEGIN
+	#sPumpPlant1 := "HmiGetStatusColorPump"(iPump := #iPumpPlant1);
+	#sPumpPlant2 := "HmiGetStatusColorPump"(iPump := #iPumpPlant2);
+	
+	#sPumpCoolWater1 := "HmiGetStatusColorPump"(iPump := #iPumpCoolWater1);
+	#sPumpCoolWater2 := "HmiGetStatusColorPump"(iPump := #iPumpCoolWater2);
+	
+	#sPumpFurnace1 := "HmiGetStatusColorPump"(iPump := #iPumpFurnace1);
+	#sPumpFurnace2 := "HmiGetStatusColorPump"(iPump := #iPumpFurnace2);
+	
+	#sCt1Fan := "HmiGetStatusColorFan"(iFan := #iFan1);
+	#sCt2Fan := "HmiGetStatusColorFan"(iFan := #iFan2);
+	
+	#sCt1SprayPipe := "HmiGetStatusColorValve"(iValve := #iSprayPipe1);
+	#sCt2SprayPipe := "HmiGetStatusColorValve"(iValve := #iSprayPipe2);
+	
+	#sSurgeTankRefill := "HmiGetStatusColorValve"(iValve := #iSurgeTankRefill);
+	
+	#IEC_TMR_1.TON(IN := #iAutoMode,
+	               PT := #sAutoModePt,
+	               Q => #tAutoModeTimer);
+	
+	#R_TRIG(CLK := #tAutoModeTimer,
+	        Q => #tAutoModeTrigger);
+	
+	IF #tAutoModeTrigger THEN
+	    #sAutoMode := NOT #sAutoMode;
+	END_IF;
+END_FUNCTION_BLOCK
+

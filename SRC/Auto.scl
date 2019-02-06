@@ -1,0 +1,136 @@
+﻿FUNCTION_BLOCK "Auto"
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : 'Searinox(Gerrit_Vogtlaender)'
+FAMILY : AKK
+VERSION : 0.1
+   VAR_INPUT 
+      iPumpPlant1Run : Bool;
+      iPumpPlant1Err : Bool;
+      iPumpPlant2Run : Bool;
+      iPumpPlant2Err : Bool;
+      iPumpCoolWater1Run : Bool;
+      iPumpCoolWater2Run : Bool;
+      iPumpCoolWater1Err : Bool;
+      iPumpCoolWater2Err : Bool;
+      iBleedingUnitCirculatingPumpRun : Bool;
+      iCt1SprayPipeIsOpen : Bool;
+      iCt2SprayPipeIsOpen : Bool;
+      iPumpPlant1 : "Pump";
+      iPumpPlant2 : "Pump";
+      iPumpCoolWater1 : "Pump";
+      iPumpCoolWater2 : "Pump";
+      iPumpFurnace1 : "Pump";
+      iPumpFurnace2 : "Pump";
+      iFan1 : "Fan";
+      iFan2 : "Fan";
+      iSurgeTank : "Tank";
+      iTempPlant : "Temperature";
+      iTempFurnace : "Temperature";
+   END_VAR
+
+   VAR_OUTPUT 
+      oPumpPlant1 : Bool;
+      oPumpPlant2 : Bool;
+      oPumpCoolWater1 : Bool;
+      oPumpCoolWater2 : Bool;
+      oCt1Fan : Bool;
+      oCt2Fan : Bool;
+      oCt1FanSetPoint : Int;
+      oCt2FanSetPoint : Int;
+      oCt1SprayPipeOpen : Bool;
+      oCt2SprayPipeOpen : Bool;
+   END_VAR
+
+   VAR 
+      sSetPointMin : Real := 0.0;
+   END_VAR
+   VAR RETAIN
+      sSetPointMax : Real := 27.0;
+   END_VAR
+   VAR 
+      PlantCirculation : "PlantCirculation";
+      CoolingTowerCirculation : "CoolingTowerCirculation";
+      sMaxCapMin : Real := 0.0;
+      sMaxCapMax : Real := 100.0;
+      sMaxInitVal : Real := 27.0;
+      sMinToMaxZone : Real := 2.0;
+      sBranch : Bool;
+      Hebeanlage : "Hebeanlage";
+   END_VAR
+
+   VAR_TEMP 
+      t_ret_val : Int;
+      t_dtl_out {OriginalPartName := 'DTL'; LibVersion := '1.0'} : DTL;
+   END_VAR
+
+
+BEGIN
+	#t_ret_val := RD_SYS_T(#t_dtl_out);
+	#sBranch := #t_dtl_out.DAY MOD 2 = 0;
+	
+	"Main_DB".AlwaysRUN.sStorageTankRefillStart := #iSurgeTank.Val.I <= #iSurgeTank.SetPoint.Upper.I;
+	
+	#PlantCirculation(iBranch := #sBranch,
+	                  iPumpPlant1Run := #iPumpPlant1Run,
+	                  iPumpPlant2Run := #iPumpPlant2Run,
+	                  iPumpPlant1Err := #iPumpPlant1Err,
+	                  iPumpPlant2Err := #iPumpPlant2Err,
+	                  iPumpPlant1 := #iPumpPlant1,
+	                  iPumpPlant2 := #iPumpPlant2,
+	                  oPumpPlant1 => #oPumpPlant1,
+	                  oPumpPlant2 => #oPumpPlant2);
+	
+	#CoolingTowerCirculation(iBranch := #sBranch,
+	                         iPumpCoolWater1 := #iPumpCoolWater1,
+	                         iPumpCoolWater2 := #iPumpCoolWater2,
+	                         iFlowTempPlant := #iTempPlant.Val.R,
+	                         iSetPointMin := #sSetPointMin,
+	                         iSetPointMax := #sSetPointMax,
+	                         iPumpCoolWater1Run := #iPumpCoolWater1Run,
+	                         iPumpCoolWater2Run := #iPumpCoolWater2Run,
+	                         iPumpCoolWater1Err := #iPumpCoolWater1Err,
+	                         iPumpCoolWater1Err_1 := #iPumpCoolWater2Err,
+	                         iBleedingUnitCirculatingPumpRun := #iBleedingUnitCirculatingPumpRun,
+	                         iCt1SprayPipeIsOpen := #iCt1SprayPipeIsOpen,
+	                         iCt2SprayPipeIsOpen := #iCt2SprayPipeIsOpen,
+	                         oPumpCoolWater1 => #oPumpCoolWater1,
+	                         oPumpCoolWater2 => #oPumpCoolWater2,
+	                         oCt1Fan => #oCt1Fan,
+	                         oCt2Fan => #oCt2Fan,
+	                         oCt1FanSetPoint => #oCt1FanSetPoint,
+	                         oCt2FanSetPoint => #oCt2FanSetPoint,
+	                         oCt1SprayPipeOpen => #oCt1SprayPipeOpen,
+	                         oCt2SprayPipeOpen => #oCt2SprayPipeOpen);
+	
+	IF #sSetPointMax < #sMaxCapMin OR #sSetPointMax > #sMaxCapMax THEN
+	    #sSetPointMax := #sMaxInitVal;
+	END_IF;
+	
+	#sSetPointMin := #sSetPointMax - #sMinToMaxZone;
+	
+	#Hebeanlage(Strang := #sBranch,
+	            iPumpFurnace1 := #iPumpFurnace1,
+	            iPumpFurnace2 := #iPumpFurnace2,
+	            Temp := #iTempFurnace.Val.R,
+	            TempMin := #sSetPointMin,
+	            TempMax := #sSetPointMax + 1,
+	            Motorschutzschalter_H1 := NOT "Ofenpumpe 1 MSS OK",
+	            Motorschutzschalter_H2 := NOT "Ofenpumpe 2 MSS OK",
+	            Betrieb_P1 := "Ofenpumpe 1 Betrieb",
+	            Betrieb_P2 := "Ofenpumpe 2 Betrieb",
+	            "H1 Klappe geöffnet" := "HA 1 Klappe geöffnet",
+	            "H2 Klappe geöffnet" := "HA 2 Klappe geöffnet",
+	            "Behälter Trockenlaufschutz" := "WSB OUT1",
+	            "Behälter Pumpe ein" := "WSB OUT2",
+	            "Behälter Pumpe aus" := "WSB OUT3",
+	            "Behälter Überlauf" := "WSB OUT4",
+	            "H1 Differenzdruck" := "HA 1 Differenzdruck",
+	            "H2 Differenzdruck" := "HA 2 Differenzdruck",
+	            "Hebeanlage 1 öffnen" => "HA 1 Klappe Freigabe",
+	            "Hebeanlage 2 öffnen" => "HA 2 Klappe Freigabe",
+	            Pumpe_H1 => "Ofenpumpe 1",
+	            Pumpe_H2 => "Ofenpumpe 2",
+	            H1_Durchflußmenge => "HA 1 Klappe Durchflußmenge",
+	            H2_Durchflußmenge => "HA 2 Klappe Durchflußmenge");
+END_FUNCTION_BLOCK
+
