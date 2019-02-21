@@ -25,15 +25,15 @@ IM/HMI/S/0/RtData\.idx
 
 IM/HMI/S/0/RtData\.plf
 
-System/PEData\.idx
+#System/PEData\.idx
 
-System/PEData\.plf
+#System/PEData\.plf
 
-System/~PEData\.2
+#System/~PEData\.2
 
 UserFiles/Screens/Thumbs\.db
 
-System/~PEData\.1
+#System/~PEData\.1
 
 IM/HMI/S/0/Generates/ProjectCharacteristics\.rdf
 
